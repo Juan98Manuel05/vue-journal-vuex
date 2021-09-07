@@ -12,7 +12,10 @@
             </div>
 
             <div>
-                <button class="btn btn-danger mx-2">
+                <button class="btn btn-danger mx-2"
+                    v-if="entry.id"
+                    @click="onDeleteEntry"
+                >
                     borrar
                     <i class="fa fa-trash-alt"></i>
                 </button>
@@ -32,7 +35,10 @@
             ></textarea>
         </div>
         
-        <Fab icon="fa-save" />
+        <Fab 
+            icon="fa-save" 
+            @on:click="saveEntry"
+        />
 
         <img 
             src="https://images.unsplash.com/photo-1606787366850-de6330128bfc?ixid=MnwxMjA3fDF8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80" alt="entry-picture"
@@ -45,7 +51,7 @@
 <script>
 
 import { defineAsyncComponent } from 'vue'
-import { mapGetters } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
 
 import getDayMonthYear from '../helpers/getDayMonthYear'
 
@@ -66,7 +72,8 @@ export default {
     },
 
     computed:{
-        ...mapGetters('journal',['getEntriesById']),
+        ...mapGetters('journal', ['getEntriesById'] ),
+
         day(){
             const { day } = getDayMonthYear( this.entry.date )
             return day
@@ -81,12 +88,36 @@ export default {
         }
     },
     methods:{
+        ...mapActions('journal', ['updateEntry', 'createEntry', 'deleteEntry']),
+
         loadEntry(){
-            console.log( this.id )
-            const entry = this.getEntriesById( this.id )
-            if( !entry ) return this.$router.push({ name: 'no-entry' })
+            let entry
+            if(this.id === 'new'){
+                entry = {
+                    text: '',
+                    date: new Date().getTime()
+                }
+            }else{
+                entry = this.getEntriesById( this.id )
+                if( !entry ) return this.$router.push({ name: 'no-entry' })
+            }
             this.entry = entry
+        },
+
+        async saveEntry(){
+            if( this.entry.id ){
+                await this.updateEntry( this.entry )
+            }else{
+                const id = await this.createEntry( this.entry )
+                this.$router.push({ name: 'entry', params: { id } })
+            }
+        },
+        async onDeleteEntry(){
+            // console.log( this.id )
+            this.deleteEntry( this.id )
+            this.$router.push({ name: 'no-entry'})
         }
+
     },
     created(){
         this.loadEntry()

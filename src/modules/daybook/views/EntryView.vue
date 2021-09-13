@@ -48,16 +48,17 @@
             @on:click="saveEntry"
         />
 
-        <!-- <img 
-            src="https://images.unsplash.com/photo-1606787366850-de6330128bfc?ixid=MnwxMjA3fDF8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80" alt="entry-picture"
-            class="img-thumbnail"
-        > -->
-
         <img 
+            v-if="entry.picture && !localImage"
+            :src="entry.picture"
+            class="img-thumbnail"
+        >
+
+        <!-- <img 
             v-if="localImage"
             :src="localImage"
             class="img-thumbnail"
-        >
+        > -->
 
     </template>
 </template>
@@ -69,6 +70,7 @@ import { mapGetters, mapActions } from 'vuex'
 import Swal from 'sweetalert2'
 
 import getDayMonthYear from '../helpers/getDayMonthYear'
+import uploadImage from '../helpers/uploadImage'
 
 export default {
     components:{
@@ -130,12 +132,18 @@ export default {
 
             Swal.showLoading()
 
+            const picture = await uploadImage( this.file )
+
+            this.entry.picture = picture
+
             if( this.entry.id ){
                 await this.updateEntry( this.entry )
             }else{
                 const id = await this.createEntry( this.entry )
                 this.$router.push({ name: 'entry', params: { id } })
             }
+
+            this.file = null
 
             Swal.fire('Guardado', 'Entrada registrada con exito','success')
         },
